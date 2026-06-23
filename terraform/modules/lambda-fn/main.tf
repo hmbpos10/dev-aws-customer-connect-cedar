@@ -27,6 +27,14 @@ module "function" {
   kms_key_arn           = var.kms_key_arn
   environment_variables = var.environment_variables
 
+  # X-Ray distributed tracing across Lambda chains (SPEC §10); attach the matching
+  # xray:Put* permissions to the function's execution role.
+  tracing_mode          = "Active"
+  attach_tracing_policy = true
+
+  # No public function URL — invocation is via SQS/Step Functions only (SPEC §7).
+  create_lambda_function_url = false
+
   # Publish a version so the alias can target it.
   publish = true
 

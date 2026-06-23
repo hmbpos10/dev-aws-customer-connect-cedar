@@ -38,6 +38,15 @@ module "state_bucket" {
     enabled = true
   }
 
+  # Reclaim storage from failed multipart uploads (CKV_AWS_300).
+  lifecycle_rule = [
+    {
+      id                                     = "abort-incomplete-multipart"
+      enabled                                = true
+      abort_incomplete_multipart_upload_days = 7
+    }
+  ]
+
   server_side_encryption_configuration = {
     rule = {
       apply_server_side_encryption_by_default = {

@@ -29,11 +29,67 @@ module "vpc" {
 
 # --- Flow logs (SPEC §4: VPC Flow Logs; central aggregation noted) --------------------
 
+# Dedicated CMK for the flow-logs group. Kept in THIS layer rather than consuming the
+# shared logs CMK from 15-security-foundation: 15 already reads 10-network's remote state
+# for the VPC, so sourcing a key from 15 here would create a circular layer dependency
+# (SPEC §13 blast-radius layering). CloudWatch Logs needs an explicit key-policy grant.
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "flow_logs_cmk" {
+  # Account root retains administrative control of the key.
+  statement {
+    sid       = "EnableRoot"
+    effect    = "Allow"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  # Allow CloudWatch Logs in this region to use the key, scoped to this log group.
+  statement {
+    sid    = "AllowCloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = ["*"]
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${var.region}.amazonaws.com"]
+    }
+    condition {
+      test     = "ArnEquals"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/vpc/connect-platform/flow-logs"]
+    }
+  }
+}
+
+resource "aws_kms_key" "flow_logs" {
+  description             = "CMK for VPC flow-logs CloudWatch group (SPEC §3)."
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+  policy                  = data.aws_iam_policy_document.flow_logs_cmk.json
+
+  tags = module.tags.tags
+}
+
+resource "aws_kms_alias" "flow_logs" {
+  name          = "alias/connect/flow-logs"
+  target_key_id = aws_kms_key.flow_logs.key_id
+}
+
 resource "aws_cloudwatch_log_group" "flow_logs" {
   name              = "/vpc/connect-platform/flow-logs"
   retention_in_days = 365
-  # KMS key wired from 15-security-foundation in a follow-up; CloudWatch encrypts at rest
-  # by default. See SPEC §3 (CMK on logs).
+  kms_key_id        = aws_kms_key.flow_logs.arn
 
   tags = module.tags.tags
 }

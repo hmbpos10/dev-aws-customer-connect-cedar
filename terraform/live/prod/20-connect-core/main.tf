@@ -42,6 +42,15 @@ module "storage" {
   versioning = {
     enabled = true
   }
+
+  # Reclaim storage from failed multipart uploads (CKV_AWS_300).
+  lifecycle_rule = [
+    {
+      id                                     = "abort-incomplete-multipart"
+      enabled                                = true
+      abort_incomplete_multipart_upload_days = 7
+    }
+  ]
   object_lock_configuration = {
     rule = {
       default_retention = {
