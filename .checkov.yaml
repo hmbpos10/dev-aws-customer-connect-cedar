@@ -1,0 +1,24 @@
+# Checkov policy for the Amazon Connect platform.
+# Shared by pre-commit (terraform_checkov) and the lint-test.yml workflow.
+
+framework:
+  - terraform
+
+# Scan modules, not just root configs.
+download-external-modules: true
+
+# Fail the build on any failed check.
+soft-fail: false
+
+# Compact CI output.
+compact: true
+quiet: true
+
+# Skip checks that conflict with this architecture, each with a justification.
+skip-check:
+  # Aurora Serverless v2 + Connect run inside a dedicated private VPC (SPEC §4);
+  # default-VPC checks do not apply.
+  - CKV_AWS_148
+  # S3 access logging buckets do not themselves require an access-logging target
+  # (would recurse); the recordings/transcripts buckets DO have logging enabled.
+  - CKV_AWS_18

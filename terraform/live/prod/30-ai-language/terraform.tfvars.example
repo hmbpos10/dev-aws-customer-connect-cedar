@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+connect_account_role_arn = "arn:aws:iam::222222222222:role/TerraformExecution"
+cost_centre              = "CC-0000"
+
+bot_name       = "hearts-and-bunnies-support"
+bot_alias_name = "prod"
+locale_id      = "en_GB"
+voice_id       = "Amy"
+
+polly_lexicons = {
+  brand = {
+    content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><lexicon version=\"1.0\" xmlns=\"http://www.w3.org/2005/01/pronunciation-lexicon\" alphabet=\"ipa\" xml:lang=\"en-GB\"><lexeme><grapheme>HnB</grapheme><alias>Hearts and Bunnies</alias></lexeme></lexicon>"
+  }
+}

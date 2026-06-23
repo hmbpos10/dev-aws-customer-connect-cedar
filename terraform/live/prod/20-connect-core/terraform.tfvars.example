@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+connect_account_role_arn = "arn:aws:iam::222222222222:role/TerraformExecution"
+cost_centre              = "CC-0000"
+
+instance_alias           = "hearts-and-bunnies"
+identity_management_type = "EXISTING_DIRECTORY"

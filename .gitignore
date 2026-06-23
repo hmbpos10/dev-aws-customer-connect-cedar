@@ -1,6 +1,9 @@
 # Local .terraform directories
 .terraform/
 
+# Claude Code local (personal) settings — shared settings.json is tracked
+.claude/settings.local.json
+
 # .tfstate files
 *.tfstate
 *.tfstate.*

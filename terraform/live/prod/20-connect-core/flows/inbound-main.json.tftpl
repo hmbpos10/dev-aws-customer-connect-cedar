@@ -1,0 +1,62 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "welcome",
+  "Actions": [
+    {
+      "Identifier": "welcome",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for calling Hearts and Bunnies. Please hold while we connect you to an agent."
+      },
+      "Transitions": {
+        "NextAction": "set-queue",
+        "Errors": [
+          {
+            "NextAction": "set-queue",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "set-queue",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "${queue_arn}"
+      },
+      "Transitions": {
+        "NextAction": "transfer-to-queue",
+        "Errors": [
+          {
+            "NextAction": "disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "transfer-to-queue",
+      "Type": "TransferContactToQueue",
+      "Parameters": {},
+      "Transitions": {
+        "NextAction": "disconnect",
+        "Errors": [
+          {
+            "NextAction": "disconnect",
+            "ErrorType": "QueueAtCapacity"
+          },
+          {
+            "NextAction": "disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}

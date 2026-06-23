@@ -1,0 +1,197 @@
+# Terraform plan/apply for the Amazon Connect platform.
+#
+#   pull_request  -> terraform plan via the READ-ONLY OIDC role, posted to the PR.
+#   push to main  -> terraform apply of the SAVED plan via the PRIVILEGED OIDC role.
+#
+# Layers run in dependency order (00 -> 02 -> 05 -> 10/15 -> 20 -> 30/40).
+# State is per-layer (s3 key prod/<layer>/terraform.tfstate) so a contact-flow
+# change never plans against networking. See SPEC §12 and CLAUDE.md.
+---
+name: terraform
+
+"on":
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches:
+      - main
+      - "feature/**"
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC
+  pull-requests: write # required to post the plan comment
+
+env:
+  TF_VERSION: "1.10.5"
+  AWS_REGION: "eu-west-2"
+  # Two distinct roles resolve the SPEC §12 (main-only) vs CLAUDE.md (PR plans on
+  # feature branches) trust contradiction. See docs/adr/0002-oidc-dual-role.md.
+  TF_PLAN_ROLE_ARN: ${{ vars.TF_PLAN_ROLE_ARN }}
+  TF_APPLY_ROLE_ARN: ${{ vars.TF_APPLY_ROLE_ARN }}
+
+# Apply only ever runs from the saved plan on main; never re-plan in the apply job.
+jobs:
+  plan:
+    name: plan (${{ matrix.layer }})
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Dependency order; layers that can run together share an index conceptually
+      # but the matrix plans each independently against its own remote state.
+      matrix:
+        layer:
+          - 00-bootstrap
+          - 02-landing-zone
+          - 05-org
+          - 10-network
+          - 15-security-foundation
+          - 20-connect-core
+          - 30-ai-language
+          - 40-integration
+    defaults:
+      run:
+        working-directory: terraform/live/prod/${{ matrix.layer }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials (read-only role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TF_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform validate
+        run: terraform validate
+
+      - name: terraform plan
+        id: plan
+        run: |
+          terraform plan -input=false -no-color -out=tfplan \
+            | tee plan_output.txt
+          {
+            echo "summary<<EOF"
+            terraform show -no-color tfplan
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload saved plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.layer }}
+          path: terraform/live/prod/${{ matrix.layer }}/tfplan
+          retention-days: 5
+
+      - name: Post plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const plan = `${{ steps.plan.outputs.summary }}`.slice(0, 60000);
+            const body = `### Terraform plan — \`${{ matrix.layer }}\`\n\`\`\`hcl\n${plan}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+  # On main: regenerate the plan once (read-only role), then apply THAT exact
+  # artifact in a separate environment-gated job. The apply job never re-plans
+  # (CLAUDE.md "apply the exact saved plan"; skill: no re-plan inside apply).
+  plan-main:
+    name: plan-main (${{ matrix.layer }})
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        layer: &layers
+          - 00-bootstrap
+          - 02-landing-zone
+          - 05-org
+          - 10-network
+          - 15-security-foundation
+          - 20-connect-core
+          - 30-ai-language
+          - 40-integration
+    defaults:
+      run:
+        working-directory: terraform/live/prod/${{ matrix.layer }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Configure AWS credentials (read-only role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TF_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: terraform init
+        run: terraform init -input=false
+      - name: terraform plan
+        run: terraform plan -input=false -no-color -lock=false -out=tfplan
+      - name: Upload saved plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-main-${{ matrix.layer }}
+          path: terraform/live/prod/${{ matrix.layer }}/tfplan
+          retention-days: 30
+
+  apply:
+    name: apply (${{ matrix.layer }})
+    needs: plan-main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Required-reviewer gate lives on this environment (SPEC §12.3).
+    environment: production
+    strategy:
+      fail-fast: true # stop the chain if an upstream layer fails to apply
+      max-parallel: 1
+      matrix:
+        layer: *layers
+    defaults:
+      run:
+        working-directory: terraform/live/prod/${{ matrix.layer }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Configure AWS credentials (privileged role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TF_APPLY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: terraform init
+        run: terraform init -input=false
+      - name: Download saved plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-main-${{ matrix.layer }}
+          path: terraform/live/prod/${{ matrix.layer }}
+      - name: terraform apply (saved plan, no re-plan)
+        # Applying a saved plan file is non-interactive; no -auto-approve needed.
+        run: terraform apply -input=false tfplan

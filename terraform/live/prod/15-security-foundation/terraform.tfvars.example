@@ -1,0 +1,22 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+connect_account_role_arn    = "arn:aws:iam::222222222222:role/TerraformExecution"
+management_account_role_arn = "arn:aws:iam::111111111111:role/TerraformExecution"
+cost_centre                 = "CC-0000"
+
+# Platform-admin / break-glass role allowed to administer the CMKs (not use them).
+key_administrators = ["arn:aws:iam::222222222222:role/PlatformAdmin"]
+
+directory_name = "corp.hearts-and-bunnies.internal"
+
+permission_sets = {
+  ConnectPlatformAdmin = {
+    description         = "Full platform administration for the contact-centre engineering team."
+    session_duration    = "PT1H"
+    managed_policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+  }
+  ConnectReadOnly = {
+    description         = "Read-only access for auditors and on-call review."
+    session_duration    = "PT8H"
+    managed_policy_arns = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
+  }
+}

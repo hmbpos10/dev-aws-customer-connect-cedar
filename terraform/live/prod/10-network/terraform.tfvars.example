@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+connect_account_role_arn = "arn:aws:iam::444444444444:role/TerraformExecution"
+cost_centre              = "CC-0000"
