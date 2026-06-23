@@ -25,6 +25,15 @@ tfsec is deprecated in favour of Trivy, but SPEC §12 lists both. Both run in pr
 and `lint-test.yml` to satisfy the spec literally; the redundancy is intentional and may
 be removed once the spec is revised.
 
+**Trivy is non-blocking in CI.** Trivy's Terraform adapter panics
+(`panic: value is null` in `adaptDefaultTags` → `AsMapValue`) while parsing our provider
+`default_tags = module.tags.tags` blocks — it cannot resolve the module-output map during
+static adaptation and crashes _before_ scanning. Reproduced on Trivy 0.65.0 and 0.70.0; no
+upstream fix identified. Because this is a scanner bug (not a finding in our code) and
+**Checkov already passes clean over the same Terraform**, the Trivy step is marked
+`continue-on-error: true`: it still runs and surfaces output, but its crash does not gate
+the PR. Remove the flag once Trivy fixes the `default_tags` panic.
+
 ## Consequences
 
 - `null_resource` + CLI breaks pure-IaC drift detection for Polly lexicons; the trigger
