@@ -45,20 +45,17 @@ jobs:
           directory: terraform/
           config_file: .checkov.yaml
 
+      # Run Trivy from its pinned official container rather than aquasecurity/trivy-action,
+      # whose godownloader install step intermittently fails fetching the release tarball
+      # (rate-limited GitHub download) before any scan runs. The container has the binary
+      # baked in; the DB is pulled from the ECR mirror to avoid GHCR pull limits.
       - name: Trivy config scan
-        uses: aquasecurity/trivy-action@v0.33.0
-        env:
-          # Pull the vuln/misconfig DB from the ECR mirror to avoid GHCR pull limits.
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-        with:
-          scan-type: config
-          scan-ref: terraform/
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-          # Authenticate the nested setup-trivy install so its GitHub download is not
-          # subject to the shared anonymous rate limit (which intermittently fails the
-          # binary install before any scan runs). github.token is fine here.
-          token-setup-trivy: ${{ github.token }}
+        run: |
+          docker run --rm \
+            -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db \
+            -v "$PWD:/src" -w /src \
+            aquasec/trivy:0.65.0 config terraform/ \
+            --severity HIGH,CRITICAL --exit-code 1
 
   python-lint:
     name: python lint + security
