@@ -48,16 +48,17 @@ jobs:
       - name: Trivy config scan
         uses: aquasecurity/trivy-action@v0.33.0
         env:
-          # Authenticate the action's binary-install GitHub API calls so they are not
-          # subject to the shared anonymous rate limit (which intermittently 403s the
-          # install and fails the step before any scan runs).
-          GITHUB_TOKEN: ${{ github.token }}
+          # Pull the vuln/misconfig DB from the ECR mirror to avoid GHCR pull limits.
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
         with:
           scan-type: config
           scan-ref: terraform/
           severity: HIGH,CRITICAL
           exit-code: "1"
+          # Authenticate the nested setup-trivy install so its GitHub download is not
+          # subject to the shared anonymous rate limit (which intermittently fails the
+          # binary install before any scan runs). github.token is fine here.
+          token-setup-trivy: ${{ github.token }}
 
   python-lint:
     name: python lint + security
