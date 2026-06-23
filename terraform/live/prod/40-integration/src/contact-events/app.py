@@ -4,7 +4,6 @@ Receives Amazon Connect contact events delivered via EventBridge and enqueued on
 and acknowledges them. Real downstream logic (CRM sync, notifications) is added later.
 """
 
-import json
 import logging
 
 logger = logging.getLogger()

@@ -17,16 +17,16 @@ against its own state — a contact-flow edit can never touch networking (SPEC �
                                                        └                  → 40-integration
 ```
 
-| Layer | Account | Purpose |
-|-------|---------|---------|
-| `00-bootstrap` | CI + targets | State backend, GitHub OIDC provider, CI roles, per-account exec roles |
-| `02-landing-zone` | management | Control Tower landing zone + guardrails |
-| `05-org` | management | OUs, SCPs, Account Factory vending (CT-enrolled member accounts) |
-| `10-network` | connect | VPC, private subnets, endpoints, flow logs, DNS firewall |
-| `15-security-foundation` | connect + security | KMS CMKs, IAM boundaries, Secrets Manager, Identity Center, Directory |
-| `20-connect-core` | connect | `hearts-and-bunnies` instance, telephony, routing, security profiles, flows |
-| `30-ai-language` | connect | Lex V2, Polly lexicons, Contact Lens rules |
-| `40-integration` | connect | Lambda, Step Functions, EventBridge, SNS, SQS, Pinpoint |
+| Layer                    | Account            | Purpose                                                                     |
+| ------------------------ | ------------------ | --------------------------------------------------------------------------- |
+| `00-bootstrap`           | CI + targets       | State backend, GitHub OIDC provider, CI roles, per-account exec roles       |
+| `02-landing-zone`        | management         | Control Tower landing zone + guardrails                                     |
+| `05-org`                 | management         | OUs, SCPs, Account Factory vending (CT-enrolled member accounts)            |
+| `10-network`             | connect            | VPC, private subnets, endpoints, flow logs, DNS firewall                    |
+| `15-security-foundation` | connect + security | KMS CMKs, IAM boundaries, Secrets Manager, Identity Center, Directory       |
+| `20-connect-core`        | connect            | `hearts-and-bunnies` instance, telephony, routing, security profiles, flows |
+| `30-ai-language`         | connect            | Lex V2, Polly lexicons, Contact Lens rules                                  |
+| `40-integration`         | connect            | Lambda, Step Functions, EventBridge, SNS, SQS, Pinpoint                     |
 
 ## Accounts (multi-account, blast radius at the account boundary)
 

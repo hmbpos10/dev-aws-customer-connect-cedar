@@ -43,7 +43,12 @@ env:
 jobs:
   plan:
     name: plan (${{ matrix.layer }})
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    # Skip (not fail) until the OIDC plan role exists: 00-bootstrap creates the roles,
+    # so the TF_PLAN_ROLE_ARN repo variable is empty until that layer is applied once
+    # out-of-band and the variable is set. See docs/adr/0002-oidc-dual-role.md.
+    if: >-
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+      && vars.TF_PLAN_ROLE_ARN != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

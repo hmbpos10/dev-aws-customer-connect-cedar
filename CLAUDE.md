@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: set up production-ready Amazon Connect Customer
 
-Provisions an Amazon Connect Customer inside a robust production-ready AWS environment, i.e. Control Tower Landing Zone Organization using IaC, Terraform, OIDC, GithActions. 
+Provisions an Amazon Connect Customer inside a robust production-ready AWS environment, i.e. Control Tower Landing Zone Organization using IaC, Terraform, OIDC, GithActions.
 Environment is production.
 
 Full scope of the Amazon Connect Customer setup found in SPEC.md
@@ -26,8 +26,7 @@ Claude Code runs in plan mode. Produce Terraform and terraform plan output for r
 Run locally: terraform fmt, terraform validate, terraform plan, tflint, git status, git diff. These are pre-approved in settings.json.
 Never run locally: terraform apply, terraform destroy, terraform import, or terraform state mutations. These are gated to ask in settings.json, and the -auto-approve variants are hard-denied. Treat them as a safety net, not the intended apply route.
 Applies happen only in CI. On the main branch of hmbpos10/dev-aws-customer-connect-cedar, GitHub Actions assumes the privileged OIDC role (AWS account 679289103098) and applies the exact saved plan. Pull requests run plan via the read-only OIDC role and post it to the PR. Do not attempt to circumvent this from the local session.
-Do not read state or secrets. Terraform state files, .env, and secrets/** are denied in settings.json — do not work around those rules.
-
+Do not read state or secrets. Terraform state files, .env, and secrets/\*\* are denied in settings.json — do not work around those rules.
 
 Reference sources (authoritative)
 
@@ -46,12 +45,12 @@ Prefer pinned terraform-aws-modules for standard primitives: vpc, iam, kms, secu
 Pin every module to a specific released version (version = "x.y.z") verified against its Registry page at build time. Do not float to latest, and do not hardcode a version from memory.
 Use native provider resources (no community module) for services lacking a maintained one — Amazon Connect itself, Lex V2, Polly, Transcribe / Contact Lens, Kinesis Data Streams / Firehose, Glue, Athena, QuickSight, Macie, GuardDuty, Security Hub, Config, WAF — and verify each against the provider docs above.
 
-
 ## Infrastructure Repo Rules
 
-## When guidance from the terraform-skill plugin conflicts with this file, this file wins. Treat the existing CI/CD workflows, the S3 state backend, and the plan→saved-plan apply flow defined here as fixed — do not regenerate, restructure, or migrate them based on skill suggestions. This repo is a single production environment; ignore multi-environment (staging/dev) scaffolding unless explicitly requested. 
+## When guidance from the terraform-skill plugin conflicts with this file, this file wins. Treat the existing CI/CD workflows, the S3 state backend, and the plan→saved-plan apply flow defined here as fixed — do not regenerate, restructure, or migrate them based on skill suggestions. This repo is a single production environment; ignore multi-environment (staging/dev) scaffolding unless explicitly requested.
 
 ## Safety (Non-negotiable)
+
 - Never run `terraform apply` without `terraform plan` first
 - Never run `terraform destroy` without explicit user confirmation
 - Never run `terraform state rm` or `terraform state mv` without confirmation
@@ -61,30 +60,35 @@ Use native provider resources (no community module) for services lacking a maint
 - Never create IAM policies with `*` actions without a comment explaining why
 
 ## Terraform
+
 - State files are in remote backend S3 (`connect-customer-terraform-github-actions` bucket)
 - Run `terraform validate` after every .tf change
 - Tag all resources: environment, project, managed-by=terraform
 - Always plan with `-out=tfplan` and apply from the saved plan; authoritative over any alternative apply pattern the skill describes
 
 ## Git
+
 - Create draft PRs
 - Once pull request reviewed, approved, and merged to main delete feature branch remotely and locally
 
 ## GitHub Actions
+
 - Include `workflow_dispatch` trigger in every workflow file
 - Linting and security scanning workflow (`lint-test.yml`) uses TFLint, Checkov, Trivy, Prettier, Ruff, Black, Bandit
 - Security review workflow (`security-review.yml`) runs Claude Code AI review on PRs targeting `main` or `feature/**`
-- All GitHub Actions workflow files must include "feature/**" as a Push branch
+- All GitHub Actions workflow files must include "feature/\*\*" as a Push branch
 - Use OpenID Connect (OIDC) to avoid storing AWS credentials (access keys) in GitHub Secrets
 
 ## Python
 
 ### Environment
+
 - Python 3.11+
 - Virtual environment using venv
 - Type hints for all function signatures
 
 ### Code Style
+
 - Follow PEP 8 style guidelines
 - Use type hints for function parameters and return types
 - Use dataclasses or Pydantic for data models
@@ -92,6 +96,7 @@ Use native provider resources (no community module) for services lacking a maint
 - Use pathlib for file paths
 
 ### Conventions
+
 - Use snake_case for variables and functions
 - Use PascalCase for classes
 - Use UPPER_CASE for constants
@@ -99,6 +104,7 @@ Use native provider resources (no community module) for services lacking a maint
 - Write docstrings for public functions
 
 ### Testing
+
 ```bash
 cd flask-app && pytest                               # run all tests
 cd flask-app && pytest test_app.py::test_health -v   # run a single test
@@ -107,6 +113,7 @@ cd flask-app && pytest test_app.py::test_health -v   # run a single test
 ## Key commands
 
 ### Terraform (run from `terraform/`)
+
 ```bash
 # If S3 backend credential errors occur, export credentials first:
 eval $(aws configure export-credentials --format env)
@@ -119,6 +126,7 @@ terraform apply -auto-approve tfplan
 ```
 
 ### Flask app (run from `flask-app/`)
+
 ```bash
 pip3 install -r requirements-dev.txt   # includes pytest + pytest-flask
 python app.py                          # runs on http://localhost:5000
@@ -128,6 +136,6 @@ python app.py                          # runs on http://localhost:5000
 
 ## Key directories
 
-- `terraform/`                     # AWS infrastructure
-- `.github/workflows/`              # CI/CD pipelines (terraform.yml, deploy.yml, lint-test.yml, security-review.yml)
-- `docs/`                          # Project documentation (ARCHITECTURE.md CHANGELOG.md)
+- `terraform/` # AWS infrastructure
+- `.github/workflows/` # CI/CD pipelines (terraform.yml, deploy.yml, lint-test.yml, security-review.yml)
+- `docs/` # Project documentation (ARCHITECTURE.md CHANGELOG.md)

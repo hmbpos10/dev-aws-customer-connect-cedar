@@ -16,10 +16,10 @@ impossible.
 
 Provision **two roles** in `00-bootstrap`:
 
-| Role | Permissions | Trust `sub` (StringLike) |
-|------|-------------|--------------------------|
-| `TF_APPLY_ROLE_ARN` (privileged) | apply | `repo:hmbpos10/dev-aws-customer-connect-cedar:ref:refs/heads/main` (verbatim SPEC §12) |
-| `TF_PLAN_ROLE_ARN` (read-only) | plan / read | `repo:…:pull_request`, `repo:…:ref:refs/heads/feature/*` |
+| Role                             | Permissions | Trust `sub` (StringLike)                                                               |
+| -------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| `TF_APPLY_ROLE_ARN` (privileged) | apply       | `repo:hmbpos10/dev-aws-customer-connect-cedar:ref:refs/heads/main` (verbatim SPEC §12) |
+| `TF_PLAN_ROLE_ARN` (read-only)   | plan / read | `repo:…:pull_request`, `repo:…:ref:refs/heads/feature/*`                               |
 
 The apply path keeps SPEC §12 unchanged. The read-only plan path widens trust only enough
 for PR plans, and grants no mutating permissions.

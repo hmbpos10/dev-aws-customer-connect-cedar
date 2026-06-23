@@ -18,7 +18,7 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 - `20-connect-core` layer: `hearts-and-bunnies` instance (EXISTING_DIRECTORY auth),
   three segregated CMK-encrypted storage buckets (recordings/transcripts/exports) with
   Object Lock, routing (hours/queue/routing profile), least-privilege security profiles
-  + agent hierarchy, and a templated inbound contact flow.
+  and agent hierarchy, and a templated inbound contact flow.
 - `30-ai-language` layer: Lex V2 bot (bot/locale/version + intent, alias and Connect
   association via CLI — provider gaps), scoped Lex execution role, custom Connect
   vocabulary, and Polly lexicons via CLI.
