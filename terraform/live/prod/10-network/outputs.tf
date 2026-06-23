@@ -10,10 +10,10 @@ output "private_subnet_ids" {
 
 output "lambda_security_group_id" {
   description = "Egress-only security group for VPC-attached Lambda."
-  value       = module.lambda_sg.security_group_id
+  value       = module.lambda_sg.id
 }
 
 output "endpoints_security_group_id" {
   description = "Security group fronting the interface VPC endpoints."
-  value       = module.endpoints_sg.security_group_id
+  value       = module.endpoints_sg.id
 }

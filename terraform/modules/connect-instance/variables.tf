@@ -63,3 +63,8 @@ variable "ctr_kinesis_stream_arn" {
   type        = string
   default     = null
 }
+
+variable "tags" {
+  description = "Tags applied to the Connect instance."
+  type        = map(string)
+}

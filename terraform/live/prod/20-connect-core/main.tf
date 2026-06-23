@@ -80,6 +80,8 @@ module "connect" {
 
   # CTR streaming is wired by the analytics layer (Zone 4) to avoid a cross-layer cycle.
   ctr_kinesis_stream_arn = null
+
+  tags = module.tags.tags
 }
 
 # --- Routing: hours, queues, routing profiles (SPEC §5) -------------------------------

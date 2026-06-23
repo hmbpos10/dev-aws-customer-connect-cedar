@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 module "tags" {
   source = "../../../modules/tagging"
 
@@ -160,7 +158,7 @@ resource "aws_vpc_endpoint" "interface" {
   service_name        = "com.amazonaws.${var.region}.${each.value}"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [module.endpoints_sg.security_group_id]
+  security_group_ids  = [module.endpoints_sg.id]
   private_dns_enabled = true
 
   tags = merge(module.tags.tags, { Name = "connect-${each.value}-if" })

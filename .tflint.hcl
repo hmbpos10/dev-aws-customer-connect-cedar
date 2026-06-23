@@ -16,8 +16,11 @@ plugin "aws" {
   version = "0.42.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 
-  # Catch invalid instance types, IAM actions, etc. against the live AWS API.
-  deep_check = true
+  # deep_check stays OFF: it calls the live AWS API, but the lint stage runs with no
+  # credentials (only plan/apply assume the OIDC role — SPEC §12). Enabling it here
+  # fails every directory with "no valid credential sources". Deep checks, if wanted,
+  # belong in a credentialed job, not the credential-less lint gate.
+  deep_check = false
 }
 
 # Enforce the standard tag set required by CLAUDE.md and SPEC §3.

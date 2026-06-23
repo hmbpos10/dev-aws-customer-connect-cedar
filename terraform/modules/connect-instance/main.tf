@@ -12,6 +12,8 @@ resource "aws_connect_instance" "this" {
   # Contact-flow logs to CloudWatch and Contact Lens analytics on (SPEC §6, §10).
   contact_flow_logs_enabled = true
   contact_lens_enabled      = var.contact_lens_enabled
+
+  tags = var.tags
 }
 
 # Call recordings -> S3, CMK-encrypted.

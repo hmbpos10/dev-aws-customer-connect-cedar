@@ -79,6 +79,8 @@ resource "aws_lambda_event_source_mapping" "contact_events" {
   function_name    = module.contact_events_fn.alias_arn
   batch_size       = 10
   enabled          = true
+
+  tags = module.tags.tags
 }
 
 # Allow the function's role to consume from the queue and decrypt with the CMK.
