@@ -4,7 +4,7 @@ variable "instance_id" {
 }
 
 variable "contact_flows" {
-  description = "Map of contact flows keyed by name. template_path points at a .json.tftpl in the caller; template_vars are interpolated into it (e.g. queue ARNs, Lex bot aliases)."
+  description = "Map of contact flows keyed by name. template_path points at a .tftpl in the caller; template_vars are interpolated into it (e.g. queue ARNs, Lex bot aliases)."
   type = map(object({
     description   = optional(string)
     type          = optional(string, "CONTACT_FLOW")

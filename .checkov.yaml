@@ -16,10 +16,10 @@ quiet: true
 
 # Templated JSON (Connect flow definitions, the Control Tower landing-zone manifest) is
 # not valid standalone JSON — it carries ${...} interpolation resolved by templatefile()
-# at plan time. Checkov's JSON parser chokes on it and, with soft-fail false, a parsing
-# error fails the run. These files are templates, not Terraform/JSON configs to scan.
+# at plan time. The files use a plain .tftpl extension (not .json.tftpl) so Checkov's
+# JSON parser never tries them; this skip-path is belt-and-braces for any *.tftpl.
 skip-path:
-  - ".*\\.json\\.tftpl$"
+  - ".*\\.tftpl$"
 
 # Skip checks that conflict with this architecture, each with a justification.
 skip-check:

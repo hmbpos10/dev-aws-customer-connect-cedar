@@ -184,7 +184,7 @@ module "contact_flows" {
     inbound-main = {
       description   = "Primary inbound flow: greet, then transfer to general support."
       type          = "CONTACT_FLOW"
-      template_path = "${path.module}/flows/inbound-main.json.tftpl"
+      template_path = "${path.module}/flows/inbound-main.tftpl"
       template_vars = {
         queue_arn = module.routing.queue_arns["general-support"]
       }

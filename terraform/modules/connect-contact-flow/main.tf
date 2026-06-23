@@ -1,5 +1,5 @@
 # Contact flows from templated JSON (SPEC §5 IVR = templated JSON; ADR 0005).
-# Flow definitions live as .json.tftpl files in the caller; templatefile() injects
+# Flow definitions live as .tftpl files in the caller; templatefile() injects
 # runtime references (queue ARNs, Lex aliases) so flows are not authored inline.
 
 resource "aws_connect_contact_flow" "this" {

@@ -1,9 +1,11 @@
 # connect-contact-flow
 
 Provisions Amazon Connect contact flows from **templated JSON** (SPEC §5 marks IVR/flows
-as `CLI` — templated; see ADR 0005). Flow definitions are `.json.tftpl` files in the
+as `CLI` — templated; see ADR 0005). Flow definitions are `.tftpl` files in the
 caller; `templatefile()` injects runtime references (queue ARNs, Lex bot aliases) so flows
-are never hardcoded inline. `jq` validates the JSON in pre-commit.
+are never hardcoded inline. `jq` validates the rendered JSON in pre-commit. (The plain
+`.tftpl` extension — not `.json.tftpl` — keeps Checkov's JSON parser from choking on the
+unrendered `${...}` interpolation.)
 
 ## Usage
 
@@ -15,7 +17,7 @@ module "contact_flows" {
   contact_flows = {
     "inbound-main" = {
       description   = "Main inbound IVR"
-      template_path = "${path.module}/contact-flows/inbound-main.json.tftpl"
+      template_path = "${path.module}/contact-flows/inbound-main.tftpl"
       template_vars = {
         support_queue_arn = module.routing.queue_arns["general-support"]
       }

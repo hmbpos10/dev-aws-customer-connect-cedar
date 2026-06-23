@@ -13,7 +13,7 @@ module "tags" {
 # The manifest references PRE-EXISTING log/audit accounts and a CMK — those are inputs,
 # not created here. First-time creation is slow and only partially idempotent.
 resource "aws_controltower_landing_zone" "this" {
-  manifest_json = templatefile("${path.module}/landing-zone-manifest.json.tftpl", {
+  manifest_json = templatefile("${path.module}/landing-zone-manifest.tftpl", {
     governed_regions    = jsonencode(var.governed_regions)
     logging_account_id  = var.logging_account_id
     security_account_id = var.security_account_id
