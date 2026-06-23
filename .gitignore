@@ -52,3 +52,7 @@ __pycache__/
 
 # Checkov downloaded external modules (at any depth)
 .external_modules/
+
+# Checkov/scanner output artifacts
+results.sarif
+*.sarif
