@@ -49,3 +49,6 @@ terraform.rc
 # Python build artifacts
 __pycache__/
 *.pyc
+
+# Checkov downloaded external modules
+terraform/.external_modules/
