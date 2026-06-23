@@ -50,5 +50,5 @@ terraform.rc
 __pycache__/
 *.pyc
 
-# Checkov downloaded external modules
-terraform/.external_modules/
+# Checkov downloaded external modules (at any depth)
+.external_modules/
