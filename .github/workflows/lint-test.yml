@@ -47,6 +47,12 @@ jobs:
 
       - name: Trivy config scan
         uses: aquasecurity/trivy-action@v0.33.0
+        env:
+          # Authenticate the action's binary-install GitHub API calls so they are not
+          # subject to the shared anonymous rate limit (which intermittently 403s the
+          # install and fails the step before any scan runs).
+          GITHUB_TOKEN: ${{ github.token }}
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
         with:
           scan-type: config
           scan-ref: terraform/
