@@ -8,7 +8,6 @@ terraform {
     key          = "prod/00-bootstrap/terraform.tfstate"
     region       = "eu-west-2"
     use_lockfile = true
-    profile      = "AdministratorAccess-679289103098"
     encrypt      = true
   }
 }
