@@ -38,3 +38,14 @@ variable "cost_centre" {
   description = "Cost-centre code for tagging."
   type        = string
 }
+
+variable "terraform_execution_role_arns" {
+  description = <<-EOT
+    Cross-account Terraform execution role ARNs the CI plan/apply roles may assume
+    (the connect_account_role_arn / management_account_role_arn each downstream layer
+    assumes in providers.tf). Empty = grant nothing yet; populate once the member-account
+    execution roles exist, then re-apply this layer. Scope to exact role ARNs, never "*".
+  EOT
+  type        = list(string)
+  default     = []
+}

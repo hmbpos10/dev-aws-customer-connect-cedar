@@ -212,6 +212,8 @@ resource "aws_iam_role_policy_attachment" "apply_state" {
   policy_arn = aws_iam_policy.state_access.arn
 }
 
-# The privileged apply role's broad provisioning permissions are intentionally left to a
-# scoped customer policy attached out of band / in a follow-up, rather than AdministratorAccess.
-# See docs/adr — least privilege over blanket Admin (SPEC §3, §9).
+# The privileged apply role gets NO broad provisioning policy: downstream layers provision
+# by assuming a cross-account Terraform execution role (providers.tf in each layer), so the
+# only privilege beyond ReadOnlyAccess + state access is sts:AssumeRole into those roles.
+# That grant lives in iam-ci-assume.tf, gated on var.terraform_execution_role_arns.
+# Least privilege over blanket Admin (SPEC §3, §9; ADR 0002).
