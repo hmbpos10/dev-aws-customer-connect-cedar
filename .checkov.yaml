@@ -1,0 +1,68 @@
+# Checkov policy for the Amazon Connect platform.
+# Shared by pre-commit (terraform_checkov) and the lint-test.yml workflow.
+
+framework:
+  - terraform
+
+# Do NOT recurse into downloaded external modules. The pinned terraform-aws-modules are
+# trusted, community-audited third-party code; scanning their internals only produced
+# false positives and, in checkov 3.3.1, a fatal HCL parser crash on the eventbridge
+# module's iam_pipes.tf. We scan what we own: root configs + our own wrapper modules.
+download-external-modules: false
+
+# Fail the build on any failed check.
+soft-fail: false
+
+# Compact CI output.
+compact: true
+quiet: true
+
+# Templated files (Connect flow definitions, the Control Tower landing-zone manifest)
+# carry ${...} interpolation resolved by templatefile() at plan time — not valid
+# standalone JSON. They use a plain .tftpl extension so checkov's JSON parser ignores
+# them; this skip-path is belt-and-braces.
+skip-path:
+  - ".*\\.tftpl$"
+
+# Skip checks that conflict with this architecture, each with a justification.
+skip-check:
+  # Aurora Serverless v2 + Connect run inside a dedicated private VPC (SPEC §4);
+  # default-VPC checks do not apply.
+  - CKV_AWS_148
+  # S3 access logging buckets do not themselves require an access-logging target
+  # (would recurse); the recordings/transcripts buckets DO have logging enabled.
+  - CKV_AWS_18
+
+  # --- IAM policy documents (our own code) --------------------------------------------
+  # The workload permission boundary (15-security-foundation) is a *ceiling*, not a
+  # grant: it intentionally Allows "*" then layers explicit Denies (no escalation, region
+  # lock). That is how a boundary works (SPEC §9); these checks misread it as a grant.
+  # The lex policy's `polly:SynthesizeSpeech` is non-resource-scopable, so its "*"
+  # resource is legitimate. The flow-logs CMK key policy keeps "kms:*" for the account
+  # root (the standard AWS key policy that keeps a key manageable).
+  - CKV_AWS_1 # full admin "*" — boundary ceiling, gated by explicit Deny
+  - CKV_AWS_49 # "*" action — boundary ceiling
+  - CKV_AWS_107 # credentials exposure — Denied explicitly in the boundary
+  - CKV_AWS_109 # perms management without constraint — boundary + KMS root policy
+  - CKV_AWS_111 # write without constraint — boundary ceiling
+  - CKV_AWS_356 # "*" resource — boundary + non-scopable Polly action
+  - CKV2_AWS_40 # full IAM privileges — boundary ceiling, gated by explicit Deny
+
+  # Module versions are pinned to released SEMVER tags verified on the Registry at build
+  # time (SPEC §15, ADR 0003) — deliberately not commit hashes. House policy conflict.
+  - CKV_TF_1
+
+  # Connect instance storage configs DO set encryption_config { encryption_type = "KMS",
+  # key_id = <CMK ARN> } (modules/connect-instance). Checkov can't resolve var.kms_key_arn
+  # to confirm it is a CMK, and cross-fires the S3 check on the KINESIS_STREAM config and
+  # vice-versa.
+  - CKV_AWS_269 # "Kinesis Video Stream uses CMK" — fires on our S3 configs
+  - CKV_AWS_270 # "S3 Storage Config uses CMK" — fires on our KINESIS_STREAM config
+
+  # Bootstrap DynamoDB lock table holds only ephemeral Terraform lock IDs (no business
+  # data); AWS-owned SSE is enabled. CMK not warranted for the lock table.
+  - CKV_AWS_119
+
+  # Managed AD admin password rotation needs a custom rotation Lambda (no managed
+  # rotation for Directory Service); wired in a follow-up. Tracked, not forgotten.
+  - CKV2_AWS_57

@@ -1,0 +1,54 @@
+# Pre-commit hooks for the Amazon Connect platform (SPEC.md §12.1).
+# Source: https://github.com/antonbabenko/pre-commit-terraform
+#
+# Install: pre-commit install
+# Run all: pre-commit run --all-files
+---
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.4
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+      # tfsec is deprecated in favour of Trivy; SPEC §12 lists both, so both run.
+      # See docs/adr/0005-tfsec-trivy-overlap.md for the rationale.
+      - id: terraform_tfsec
+      - id: terraform_trivy
+      - id: terraform_checkov
+        args:
+          - --args=--config-file __GIT_WORKING_DIR__/.checkov.yaml
+      - id: terrascan
+        args:
+          - --args=--severity=HIGH
+      - id: tfupdate
+        name: tfupdate (lock provider versions)
+        args:
+          - --args=provider aws
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+
+  # JSON contact-flow templates are validated/normalised with jq (SPEC §12.1).
+  - repo: local
+    hooks:
+      - id: jq-validate-contact-flows
+        name: jq validate contact-flow JSON
+        language: system
+        entry: bash -c 'for f in "$@"; do jq empty "$f" || exit 1; done' --
+        files: ^terraform/.*/contact-flows/.*\.json(\.tftpl)?$

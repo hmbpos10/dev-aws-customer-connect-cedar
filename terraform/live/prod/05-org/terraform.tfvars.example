@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+management_account_role_arn = "arn:aws:iam::111111111111:role/TerraformExecution"
+cost_centre                 = "CC-0000"
+
+vended_accounts = {
+  connect = {
+    account_email       = "aws-connect@example.com"
+    account_name        = "connect"
+    sso_user_email      = "platform@example.com"
+    sso_user_first_name = "Platform"
+    sso_user_last_name  = "Team"
+    organizational_unit = "ContactCentre"
+  }
+}

@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+cost_centre = "CC-0000"
+github_org  = "hmbpos10"
+github_repo = "dev-aws-customer-connect-cedar"
+owner       = "contact-centre-platform"
+
+# Cross-account execution roles the CI plan/apply roles may assume (one per target
+# account). Leave empty on first bootstrap if the roles don't exist yet, then re-apply.
+# terraform_execution_role_arns = [
+#   "arn:aws:iam::444444444444:role/TerraformExecution", # connect account
+#   "arn:aws:iam::555555555555:role/TerraformExecution", # org management account
+# ]

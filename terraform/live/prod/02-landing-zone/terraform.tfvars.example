@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+management_account_role_arn = "arn:aws:iam::111111111111:role/TerraformExecution"
+landing_zone_version        = "4.0" # verify the current supported version first
+logging_account_id          = "222222222222"
+security_account_id         = "333333333333"
+kms_key_arn                 = "arn:aws:kms:eu-west-2:111111111111:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+governed_regions            = ["eu-west-2"]
+cost_centre                 = "CC-0000"

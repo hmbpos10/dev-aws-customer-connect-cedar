@@ -1,6 +1,9 @@
 # Local .terraform directories
 .terraform/
 
+# Claude Code local (personal) settings — shared settings.json is tracked
+.claude/settings.local.json
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
@@ -42,3 +45,14 @@ terraform.rc
 # Optional: ignore plan files saved before destroying Terraform configuration
 # Uncomment the line below if you want to ignore planout files.
 # planout
+
+# Python build artifacts
+__pycache__/
+*.pyc
+
+# Checkov downloaded external modules (at any depth)
+.external_modules/
+
+# Checkov/scanner output artifacts
+results.sarif
+*.sarif

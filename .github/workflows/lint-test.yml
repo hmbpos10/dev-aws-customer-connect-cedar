@@ -1,0 +1,92 @@
+# Linting and security scanning (CLAUDE.md).
+# Tools: TFLint, Checkov, Trivy, Prettier, Ruff, Black, Bandit.
+---
+name: lint-test
+
+"on":
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+  push:
+    branches:
+      - main
+      - "feature/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-lint:
+    name: terraform lint + scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive terraform/
+
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.54.0
+      - run: |
+          tflint --init --config="$PWD/.tflint.hcl"
+          tflint --recursive --config="$PWD/.tflint.hcl"
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          config_file: .checkov.yaml
+
+      # Run Trivy from its pinned official container rather than aquasecurity/trivy-action,
+      # whose godownloader install step intermittently fails fetching the release tarball
+      # (rate-limited GitHub download) before any scan runs. The container has the binary
+      # baked in; the DB is pulled from the ECR mirror to avoid GHCR pull limits.
+      #
+      # NON-BLOCKING (continue-on-error): Trivy's terraform adapter panics
+      # ("value is null" in adaptDefaultTags) on our provider `default_tags =
+      # module.tags.tags` blocks — a Trivy bug, reproduced on 0.65.0 and 0.70.0, that
+      # crashes before any scan runs. Checkov is the blocking misconfig gate and passes
+      # clean; SPEC §12 lists both but ADR 0005 records Trivy as redundant/removable.
+      # Kept here (visible, not green-washed) so it re-blocks once Trivy fixes the panic.
+      - name: Trivy config scan
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db \
+            -v "$PWD:/src" -w /src \
+            aquasec/trivy:0.65.0 config terraform/ \
+            --severity HIGH,CRITICAL --exit-code 1
+
+  python-lint:
+    name: python lint + security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff black bandit
+      - name: Ruff
+        run: ruff check .
+      - name: Black
+        run: black --check .
+      - name: Bandit
+        run: bandit -r . -ll --exclude ./.git
+
+  prettier:
+    name: prettier (yaml/json/md)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npx --yes prettier@3.3.3 --check "**/*.{yml,yaml,json,md}"
